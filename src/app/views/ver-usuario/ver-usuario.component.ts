@@ -6,7 +6,7 @@ import { IonHeader, IonToolbar, IonTitle, IonThumbnail, IonContent, IonLabel, Io
 import { CartService } from '../../common/services/cart.service';  // Servicio del carrito
 import { CartItem } from '../../common/models/carrito.models';   // Modelo del carrito
 import { NavController } from '@ionic/angular';
-import { BitlyService } from '../../common/services/bitly.service'; // Asegúrate de que la ruta sea correcta
+import { UrlShortenerService } from '../../common/services/bitly.service'; // Asegúrate de que la ruta sea correcta
 
 import { HttpClientModule } from '@angular/common/http';
 
@@ -48,7 +48,7 @@ export class VerUsuarioComponent implements OnInit {
   totalsByCurrency: { [currency: string]: number } = {}; // Totales por moneda
   grandTotal: number = 0; // Gran total de todos los productos
 
-  constructor(private cartService: CartService,private navController: NavController, private firestoreService : FirestoreService,private bitlyService: BitlyService) {}
+  constructor(private cartService: CartService,private navController: NavController, private firestoreService : FirestoreService,private urlShortenerService: UrlShortenerService) {}
 
   ngOnInit() {
     this.cartService.getCart().subscribe(items => {
@@ -130,63 +130,43 @@ const whatsappUrl = `https://wa.me/${5493492214933}?text=${encodeURIComponent(me
 
 
 
-  // async createOrderMessage(): Promise<string> {
-  //   let message = '¡Hola! Aquí está mi pedido:\n\n';
-  //   const imageShortUrls = await this.shortenImageUrls();
-
-  //   this.cartItems.forEach((item, index) => {
-  //     const productName = this.getProductName(item.product);
-  //     const currencySymbol = this.getCurrencySymbol(item.product.currency);
-  //     const price = item.product.price;
-
-  //     const imageUrl = imageShortUrls[index];
-
-  //     message += `${productName} - ${currencySymbol}${price} \nImagen disponible (ver en WhatsApp): ${imageUrl}\n\n`;
-  //   });
-
-  //   return message;
-  // }
 
 
   async createOrderMessage(): Promise<string> {
-  let message = '¡Hola! Aquí está mi pedido:\n\n';
-  const imageShortUrls = await this.shortenImageUrls(); // Acortar las URLs de las imágenes
+    let message = '¡Hola! Aquí está mi pedido:\n\n';
+    const imageShortUrls = await this.shortenImageUrls(); // Acortar las URLs de las imágenes
 
-  this.cartItems.forEach((item, index) => {
-    const productName = this.getProductName(item.product);
-    const currencySymbol = this.getCurrencySymbol(item.product.currency);
-    const price = item.product.price;
+    this.cartItems.forEach((item, index) => {
+      const productName = this.getProductName(item.product);
+      const currencySymbol = this.getCurrencySymbol(item.product.currency);
+      const price = item.product.price;
 
-    // Usar las URLs acortadas de todas las imágenes del producto
-    const images = item.product.imagenesUrl || []; // Obtiene las imágenes del producto
-    const shortenedUrls = images.map((url, imgIndex) => imageShortUrls[index][imgIndex]); // URL acortada correspondiente
+      const shortenedUrls = imageShortUrls[index]; // Usar las URLs acortadas
 
-    // Presentar el mensaje con todas las URLs de imágenes acortadas
-    message += `${productName} - ${currencySymbol}${price} \nImágenes disponibles:\n`;
-    shortenedUrls.forEach(url => {
-      message += `${url}\n`;
+      message += `${productName} - ${currencySymbol}${price} \nImágenes disponibles:\n`;
+      shortenedUrls.forEach(url => {
+        message += `${url}\n`;
+      });
+      message += '\n';
     });
-    message += '\n'; // Espacio entre productos
-  });
 
-  return message;
-}
+    return message;
+  }
 
-
-private async shortenImageUrls(): Promise<string[][]> {
-  const shortenedUrls: string[][] = [];
-  const urlPromises = this.cartItems.map(item => {
-    const images = item.product.imagenesUrl || []; // Obtener las imágenes del producto
-    return Promise.all(images.map(imageUrl => {
-      return this.bitlyService.shortenUrl(imageUrl).toPromise().then(response => response.link);
-    })).then(shortenedImageUrls => {
-      shortenedUrls.push(shortenedImageUrls); // Almacena el array de URLs acortadas
+  // Método para acortar URLs de imágenes
+  private async shortenImageUrls(): Promise<string[][]> {
+    const shortenedUrls: string[][] = [];
+    const urlPromises = this.cartItems.map(async (item) => {
+      const images = item.product.imagenesUrl || [];
+      const shortenedImageUrls = await Promise.all(images.map(async (imageUrl) => {
+        return await this.urlShortenerService.shortenUrl(imageUrl);
+      }));
+      shortenedUrls.push(shortenedImageUrls);
     });
-  });
 
-  await Promise.all(urlPromises);
-  return shortenedUrls;
-}
+    await Promise.all(urlPromises);
+    return shortenedUrls;
+  }
 
 
 
