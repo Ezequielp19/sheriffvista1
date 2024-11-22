@@ -32,7 +32,7 @@
 
 
    <div *ngIf="buckleBelt.imagenesUrl && buckleBelt.imagenesUrl.length > 0">
-    <h3>Imágenes de la Hebilla</h3>
+    <h3>Imágenes de los cinturones</h3>
     <div class="carousel">
       <div class="carousel-images">
         <img *ngFor="let imagenUrl of buckleBelt.imagenesUrl"
@@ -54,7 +54,7 @@
           <ion-card-title>{{ buckleBelt.brand || 'Marca desconocida' }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="buckle-card-content">
-          <p><strong>Color de la hebilla:</strong> {{ buckleBelt.buckleColor }}</p>
+          <p><strong>Color:</strong> {{ buckleBelt.buckleColor }}</p>
           <p><strong>Estilo:</strong> {{ buckleBelt.style }}</p>
           <p><strong>Tamaño:</strong> {{ buckleBelt.size }}</p>
           <p><strong>Tipo de Cuero:</strong> {{ buckleBelt.fabricDesign }}</p>
